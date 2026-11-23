@@ -30,6 +30,8 @@ As migrations estão em `supabase/migrations`, em ordem:
 
 Para aplicar no projeto de desenvolvimento: no painel do Supabase, abra SQL Editor, cole e rode cada arquivo na ordem acima e, por último, o `seed.sql`. (Ou use a CLI do Supabase com `supabase db push`.)
 
+**Cuidado com acentos no Windows:** os arquivos são UTF-8. Ao copiar pelo PowerShell 5.1, use sempre `Get-Content -Raw -Encoding UTF8 arquivo.sql | Set-Clipboard`. Sem `-Encoding UTF8` o texto vira `DanÃ§a`, `MÃºsica`. Se isso acontecer no banco, rode `supabase/2-reparo-acentos.sql` (local, não versionado) ou refaça o seed com a codificação correta.
+
 ### Primeiro acesso
 1. No Supabase: Authentication, Users, Add user. Crie o seu usuário com e-mail e senha.
 2. No SQL Editor, promova esse usuário a coordenação (troque o e-mail):
