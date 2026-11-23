@@ -1,0 +1,24 @@
+# dependências e builds
+node_modules/
+dist/
+build/
+.next/
+
+# segredos: nunca versionar (o repositório é público)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Vercel e Supabase locais
+.vercel/
+supabase/.temp/
+supabase/.branches/
+
+# sistema operacional e editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
