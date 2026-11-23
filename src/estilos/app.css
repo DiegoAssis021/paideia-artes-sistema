@@ -8,6 +8,19 @@
 .entrada__cartao h1{font-size:28px;font-weight:800;letter-spacing:-.02em}
 .entrada__logo{height:64px;width:auto;align-self:flex-start;background:var(--tinta);padding:8px 14px;border-radius:12px}
 .entrada__nota{font-size:13.5px}
+
+/* a tela de entrada cresce com a janela: confortável no celular, proporcional em telas grandes */
+.entrada{padding:clamp(16px,3vw,48px)}
+.entrada__cartao{width:min(100%,clamp(340px,32vw,620px));padding:clamp(26px,2.6vw,52px) clamp(22px,2.4vw,48px);gap:clamp(16px,1.5vw,28px);border-radius:clamp(14px,1.2vw,22px)}
+.entrada__cartao h1{font-size:clamp(28px,2.4vw,46px)}
+.entrada__cartao .leve{font-size:clamp(15px,1.05vw,19px)}
+.entrada__logo{height:clamp(64px,5.2vw,104px);border-radius:clamp(12px,1vw,18px)}
+.entrada .campo{font-size:clamp(13.5px,1vw,17px);gap:clamp(6px,.5vw,10px)}
+.entrada .campo input{height:clamp(44px,3.3vw,64px);font-size:clamp(15px,1.15vw,20px);padding:0 clamp(14px,1vw,20px);border-radius:clamp(10px,.8vw,14px)}
+.entrada .btn{height:clamp(46px,3.4vw,66px);font-size:clamp(15px,1.15vw,20px)}
+.entrada .btn--ghost{font-size:clamp(14.5px,1.05vw,18px)}
+.entrada .alerta{font-size:clamp(14px,1vw,17px)}
+.entrada__nota{font-size:clamp(13.5px,.95vw,16px)}
 .btn:disabled{opacity:.6;cursor:not-allowed}
 
 /* menu lateral */
