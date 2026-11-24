@@ -55,7 +55,6 @@ export interface Aluno {
   id: string;
   nome: string;
   nascimento: string | null;
-  responsavel_id: string | null;
   contato_emergencia_nome: string | null;
   contato_emergencia_telefone: string | null;
   observacoes: string | null;

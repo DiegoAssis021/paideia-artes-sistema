@@ -10,8 +10,15 @@ interface Linha {
   nome: string;
   nascimento: string | null;
   ativo: boolean;
-  responsaveis: { nome: string } | null;
+  aluno_responsaveis: { ordem: number; responsaveis: { nome: string } | null }[];
   matriculas: { status: string; turmas: { nome: string } | null }[];
+}
+
+function nomesResp(a: Linha): string[] {
+  return [...a.aluno_responsaveis]
+    .sort((x, y) => x.ordem - y.ordem)
+    .map((v) => v.responsaveis?.nome ?? '')
+    .filter(Boolean);
 }
 
 export default function Alunos() {
@@ -24,7 +31,7 @@ export default function Alunos() {
       ler<Linha[]>(
         supabase
           .from('alunos')
-          .select('id, nome, nascimento, ativo, responsaveis(nome), matriculas(status, turmas(nome))')
+          .select('id, nome, nascimento, ativo, aluno_responsaveis(ordem, responsaveis(nome)), matriculas(status, turmas(nome))')
           .order('nome') as never,
       ),
     [],
@@ -35,7 +42,7 @@ export default function Alunos() {
     return (dados ?? []).filter(
       (a) =>
         (situacao === 'todos' || (situacao === 'ativos' ? a.ativo : !a.ativo)) &&
-        (termo === '' || semAcento(a.nome).includes(termo) || semAcento(a.responsaveis?.nome ?? '').includes(termo)),
+        (termo === '' || semAcento(a.nome).includes(termo) || nomesResp(a).some((n) => semAcento(n).includes(termo))),
     );
   }, [dados, busca, situacao]);
 
@@ -114,7 +121,7 @@ export default function Alunos() {
                           </Link>
                         </td>
                         <td className="nw">{textoIdade(a.nascimento)}</td>
-                        <td>{a.responsaveis?.nome ?? <span className="leve">Sem responsável</span>}</td>
+                        <td>{nomesResp(a).join(', ') || <span className="leve">Sem responsável</span>}</td>
                         <td>{turmas.length ? turmas.join(', ') : <span className="leve">Sem turma</span>}</td>
                         <td>
                           <Selo tom={a.ativo ? 'ok' : 'nao'}>{a.ativo ? 'Ativo' : 'Inativo'}</Selo>

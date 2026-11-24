@@ -12,6 +12,7 @@ delete from public.matriculas;
 delete from public.horarios;
 delete from public.turmas;
 delete from public.alunos;
+delete from public.aluno_responsaveis;
 delete from public.responsaveis;
 delete from auth.users where email like '%@exemplo.invalid';
 
@@ -86,12 +87,12 @@ with resp as (
     ('Jorge Bastos',      'Pai',  '(21) 90000-0005', null),
     ('Camila Duarte',     'Mãe',  '(21) 90000-0006', 'camila@exemplo.invalid'),
     ('Sandra Pinheiro',   'Mãe',  '(21) 90000-0007', null),
-    ('Marta Queiroz',     'Mãe',  '(21) 90000-0008', 'marta@exemplo.invalid')
+    ('Marta Queiroz',     'Mãe',  '(21) 90000-0008', 'marta@exemplo.invalid'),
+    ('Ricardo Ribeiro',   'Pai',  '(21) 90000-0009', 'ricardo.ribeiro@exemplo.invalid')
   returning id, nome
-)
-insert into public.alunos (nome, nascimento, responsavel_id, contato_emergencia_nome, contato_emergencia_telefone, observacoes, aluno_desde)
-select v.nome, v.nasc::date, r.id, v.emerg, v.tel, v.obs, v.desde::date
-from (values
+),
+v as (
+  select * from (values
   ('Sofia Martins Ribeiro', '2018-04-12', 'Patrícia Martins', 'Ricardo Ribeiro (pai)', '(21) 90000-0011', 'Prefere ser chamada de Sofi.', '2024-03-12'),
   ('Pedro Martins Ribeiro', '2013-09-03', 'Patrícia Martins', 'Ricardo Ribeiro (pai)', '(21) 90000-0011', null, '2024-03-12'),
   ('Helena Almeida',        '2019-01-20', 'Ricardo Almeida',  'Ana Almeida (mãe)',     '(21) 90000-0012', null, '2025-02-10'),
@@ -105,8 +106,19 @@ from (values
   ('Beatriz Pinheiro',      '2009-03-25', 'Sandra Pinheiro',  'Sandra Pinheiro',       '(21) 90000-0007', null, '2021-09-01'),
   ('Lucas Queiroz',         '2010-08-16', 'Marta Queiroz',    'Marta Queiroz',         '(21) 90000-0008', null, '2023-03-06'),
   ('Cecília Queiroz',       '2017-04-04', 'Marta Queiroz',    'Marta Queiroz',         '(21) 90000-0008', null, '2023-03-06')
-) as v(nome, nasc, resp, emerg, tel, obs, desde)
-join resp r on r.nome = v.resp;
+) as t(nome, nasc, resp, emerg, tel, obs, desde)
+),
+novos as (
+  insert into public.alunos (nome, nascimento, contato_emergencia_nome, contato_emergencia_telefone, observacoes, aluno_desde)
+  select nome, nasc::date, emerg, tel, obs, desde::date from v
+  returning id, nome
+)
+-- Responsável principal (ordem 1) e, para os irmãos Ribeiro, um segundo responsável.
+insert into public.aluno_responsaveis (aluno_id, responsavel_id, ordem)
+select n.id, r.id, 1 from novos n join v on v.nome = n.nome join resp r on r.nome = v.resp
+union all
+select n.id, r.id, 2 from novos n join resp r on r.nome = 'Ricardo Ribeiro'
+where n.nome in ('Sofia Martins Ribeiro', 'Pedro Martins Ribeiro');
 
 -- ---------------------------------------------------------------- matrículas
 insert into public.matriculas (aluno_id, turma_id, data_inicio)

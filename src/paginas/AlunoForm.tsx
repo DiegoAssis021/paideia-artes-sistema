@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAviso } from '../componentes/Aviso';
 import { Campo, Carregando, Erro, Topo } from '../componentes/pecas';
@@ -9,6 +9,16 @@ import { useCarregar } from '../lib/useCarregar';
 interface Dados {
   aluno: Aluno | null;
   responsaveis: Responsavel[];
+  vinculados: string[]; // ids dos responsáveis do aluno, em ordem
+}
+
+interface LinhaResp {
+  chave: number;
+  id: string; // '' = novo responsável
+  nome: string;
+  parentesco: string;
+  whatsapp: string;
+  email: string;
 }
 
 const vazioParaNulo = (s: string) => (s.trim() === '' ? null : s.trim());
@@ -16,13 +26,18 @@ const vazioParaNulo = (s: string) => (s.trim() === '' ? null : s.trim());
 export default function AlunoForm() {
   const { id } = useParams();
   const { dados, erro, carregando } = useCarregar<Dados>(async () => {
-    const [aluno, responsaveis] = await Promise.all([
+    const [aluno, responsaveis, vinculos] = await Promise.all([
       id ? ler<Aluno>(supabase.from('alunos').select('*').eq('id', id).single() as never) : Promise.resolve(null),
       ler<Responsavel[]>(
         supabase.from('responsaveis').select('id, nome, parentesco, whatsapp, email').order('nome') as never,
       ),
+      id
+        ? ler<{ responsavel_id: string }[]>(
+            supabase.from('aluno_responsaveis').select('responsavel_id').eq('aluno_id', id).order('ordem') as never,
+          )
+        : Promise.resolve([] as { responsavel_id: string }[]),
     ]);
-    return { aluno, responsaveis };
+    return { aluno, responsaveis, vinculados: vinculos.map((v) => v.responsavel_id) };
   }, [id]);
 
   if (erro) return <Erro texto={erro} />;
@@ -34,7 +49,6 @@ function Formulario({ dados, id }: { dados: Dados; id?: string }) {
   const ir = useNavigate();
   const avisar = useAviso();
   const a = dados.aluno;
-  const resp0 = dados.responsaveis.find((r) => r.id === a?.responsavel_id) ?? null;
 
   const [nome, setNome] = useState(a?.nome ?? '');
   const [nascimento, setNascimento] = useState(a?.nascimento ?? '');
@@ -43,22 +57,39 @@ function Formulario({ dados, id }: { dados: Dados; id?: string }) {
   const [obs, setObs] = useState(a?.observacoes ?? '');
   const [ativo, setAtivo] = useState(a?.ativo ?? true);
 
-  const [respId, setRespId] = useState(resp0?.id ?? '');
-  const [respNome, setRespNome] = useState(resp0?.nome ?? '');
-  const [parentesco, setParentesco] = useState(resp0?.parentesco ?? '');
-  const [whatsapp, setWhatsapp] = useState(resp0?.whatsapp ?? '');
-  const [email, setEmail] = useState(resp0?.email ?? '');
+  const proxima = useRef(0);
+  const novaLinha = (r?: Responsavel): LinhaResp => ({
+    chave: proxima.current++,
+    id: r?.id ?? '',
+    nome: r?.nome ?? '',
+    parentesco: r?.parentesco ?? '',
+    whatsapp: r?.whatsapp ?? '',
+    email: r?.email ?? '',
+  });
+  const [linhas, setLinhas] = useState<LinhaResp[]>(() => {
+    const existentes = dados.vinculados
+      .map((rid) => dados.responsaveis.find((r) => r.id === rid))
+      .filter((r): r is Responsavel => !!r)
+      .map((r) => novaLinha(r));
+    return existentes.length ? existentes : [novaLinha()];
+  });
 
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
 
-  function escolherResponsavel(novoId: string) {
-    setRespId(novoId);
+  function mudar(chave: number, parte: Partial<LinhaResp>) {
+    setLinhas((ls) => ls.map((l) => (l.chave === chave ? { ...l, ...parte } : l)));
+  }
+
+  function escolherResponsavel(chave: number, novoId: string) {
     const r = dados.responsaveis.find((x) => x.id === novoId);
-    setRespNome(r?.nome ?? '');
-    setParentesco(r?.parentesco ?? '');
-    setWhatsapp(r?.whatsapp ?? '');
-    setEmail(r?.email ?? '');
+    mudar(chave, {
+      id: novoId,
+      nome: r?.nome ?? '',
+      parentesco: r?.parentesco ?? '',
+      whatsapp: r?.whatsapp ?? '',
+      email: r?.email ?? '',
+    });
   }
 
   async function salvar(e: FormEvent) {
@@ -66,28 +97,29 @@ function Formulario({ dados, id }: { dados: Dados; id?: string }) {
     setErro(null);
     setSalvando(true);
     try {
-      let responsavelId: string | null = null;
-      if (respNome.trim() !== '') {
+      const idsResp: string[] = [];
+      for (const l of linhas) {
+        if (l.nome.trim() === '') continue;
         const corpoResp = {
-          nome: respNome.trim(),
-          parentesco: vazioParaNulo(parentesco),
-          whatsapp: vazioParaNulo(whatsapp),
-          email: vazioParaNulo(email),
+          nome: l.nome.trim(),
+          parentesco: vazioParaNulo(l.parentesco),
+          whatsapp: vazioParaNulo(l.whatsapp),
+          email: vazioParaNulo(l.email),
         };
-        if (respId) {
-          await executar(supabase.from('responsaveis').update(corpoResp).eq('id', respId));
-          responsavelId = respId;
+        let rid = l.id;
+        if (rid) {
+          await executar(supabase.from('responsaveis').update(corpoResp).eq('id', rid));
         } else {
           const novo = await ler<{ id: string }>(
             supabase.from('responsaveis').insert(corpoResp).select('id').single() as never,
           );
-          responsavelId = novo.id;
+          rid = novo.id;
         }
+        if (!idsResp.includes(rid)) idsResp.push(rid);
       }
       const corpo = {
         nome: nome.trim(),
         nascimento: nascimento || null,
-        responsavel_id: responsavelId,
         contato_emergencia_nome: vazioParaNulo(emergNome),
         contato_emergencia_telefone: vazioParaNulo(emergTel),
         observacoes: vazioParaNulo(obs),
@@ -99,6 +131,14 @@ function Formulario({ dados, id }: { dados: Dados; id?: string }) {
       } else {
         const novo = await ler<{ id: string }>(supabase.from('alunos').insert(corpo).select('id').single() as never);
         alunoId = novo.id;
+      }
+      await executar(supabase.from('aluno_responsaveis').delete().eq('aluno_id', alunoId!));
+      if (idsResp.length) {
+        await executar(
+          supabase
+            .from('aluno_responsaveis')
+            .insert(idsResp.map((rid, i) => ({ aluno_id: alunoId, responsavel_id: rid, ordem: i + 1 }))),
+        );
       }
       avisar(id ? 'Ficha atualizada' : 'Aluno cadastrado');
       ir(`/alunos/${alunoId}`);
@@ -140,34 +180,65 @@ function Formulario({ dados, id }: { dados: Dados; id?: string }) {
         </section>
 
         <section className="card bloco">
-          <h2>Responsável</h2>
-          <Campo rotulo="Responsável">
-            <select value={respId} onChange={(e) => escolherResponsavel(e.target.value)}>
-              <option value="">Novo responsável</option>
-              {dados.responsaveis.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.nome}
-                </option>
-              ))}
-            </select>
-          </Campo>
+          <h2>Responsáveis</h2>
           <p className="sub-nota">
-            Irmãos podem compartilhar o mesmo responsável. Ao editar um responsável existente, a mudança vale para todos os
-            alunos ligados a ele.
+            O primeiro é o responsável principal (recebe a mensagem pelo WhatsApp). Irmãos podem compartilhar os mesmos
+            responsáveis. Ao editar um responsável existente, a mudança vale para todos os alunos ligados a ele.
           </p>
-          <div className="form__grade">
-            <Campo rotulo="Nome do responsável">
-              <input value={respNome} onChange={(e) => setRespNome(e.target.value)} />
-            </Campo>
-            <Campo rotulo="Parentesco">
-              <input value={parentesco} onChange={(e) => setParentesco(e.target.value)} placeholder="Mãe, pai, avó..." />
-            </Campo>
-            <Campo rotulo="WhatsApp">
-              <input type="tel" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="(21) 90000-0000" />
-            </Campo>
-            <Campo rotulo="E-mail">
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-            </Campo>
+          {linhas.map((l, i) => (
+            <div
+              key={l.chave}
+              style={i > 0 ? { marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(128,128,128,.3)' } : undefined}
+            >
+              <Campo rotulo={i === 0 ? 'Responsável principal' : `Responsável ${i + 1}`}>
+                <select value={l.id} onChange={(e) => escolherResponsavel(l.chave, e.target.value)}>
+                  <option value="">Novo responsável</option>
+                  {dados.responsaveis.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.nome}
+                    </option>
+                  ))}
+                </select>
+              </Campo>
+              <div className="form__grade">
+                <Campo rotulo="Nome do responsável">
+                  <input value={l.nome} onChange={(e) => mudar(l.chave, { nome: e.target.value })} />
+                </Campo>
+                <Campo rotulo="Parentesco">
+                  <input
+                    value={l.parentesco}
+                    onChange={(e) => mudar(l.chave, { parentesco: e.target.value })}
+                    placeholder="Mãe, pai, avó..."
+                  />
+                </Campo>
+                <Campo rotulo="WhatsApp">
+                  <input
+                    type="tel"
+                    value={l.whatsapp}
+                    onChange={(e) => mudar(l.chave, { whatsapp: e.target.value })}
+                    placeholder="(21) 90000-0000"
+                  />
+                </Campo>
+                <Campo rotulo="E-mail">
+                  <input type="email" value={l.email} onChange={(e) => mudar(l.chave, { email: e.target.value })} />
+                </Campo>
+              </div>
+              {linhas.length > 1 ? (
+                <button
+                  type="button"
+                  className="btn btn--ghost"
+                  style={{ height: 36, fontSize: 13 }}
+                  onClick={() => setLinhas((ls) => ls.filter((x) => x.chave !== l.chave))}
+                >
+                  Remover este responsável
+                </button>
+              ) : null}
+            </div>
+          ))}
+          <div style={{ marginTop: 16 }}>
+            <button type="button" className="btn btn--ghost" onClick={() => setLinhas((ls) => [...ls, novaLinha()])}>
+              Adicionar outro responsável
+            </button>
           </div>
         </section>
 

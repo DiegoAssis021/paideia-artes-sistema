@@ -16,7 +16,7 @@ interface OpcaoTurma {
 
 interface Dados {
   aluno: Aluno;
-  responsavel: Responsavel | null;
+  responsaveis: Responsavel[];
   matriculas: MatriculaComTurma[];
   turmas: OpcaoTurma[];
 }
@@ -30,12 +30,14 @@ export default function AlunoFicha() {
 
   const { dados, erro, carregando, recarregar } = useCarregar<Dados>(async () => {
     const aluno = await ler<Aluno>(supabase.from('alunos').select('*').eq('id', id!).single() as never);
-    const [responsavel, matriculas, turmas] = await Promise.all([
-      aluno.responsavel_id
-        ? ler<Responsavel>(
-            supabase.from('responsaveis').select('id, nome, parentesco, whatsapp, email').eq('id', aluno.responsavel_id).single() as never,
-          )
-        : Promise.resolve(null),
+    const [responsaveis, matriculas, turmas] = await Promise.all([
+      ler<{ ordem: number; responsaveis: Responsavel | null }[]>(
+        supabase
+          .from('aluno_responsaveis')
+          .select('ordem, responsaveis(id, nome, parentesco, whatsapp, email)')
+          .eq('aluno_id', id!)
+          .order('ordem') as never,
+      ).then((v) => v.map((x) => x.responsaveis).filter((r): r is Responsavel => r !== null)),
       ler<MatriculaComTurma[]>(
         supabase
           .from('matriculas')
@@ -49,7 +51,7 @@ export default function AlunoFicha() {
         supabase.from('turmas').select('id, nome, vagas_total, matriculas(status)').eq('ativa', true).order('nome') as never,
       ),
     ]);
-    return { aluno, responsavel, matriculas, turmas };
+    return { aluno, responsaveis, matriculas, turmas };
   }, [id]);
 
   async function agir(fazer: () => Promise<void>, ok: string) {
@@ -67,10 +69,10 @@ export default function AlunoFicha() {
   if (carregando && !dados) return <Carregando />;
   if (!dados) return null;
 
-  const { aluno, responsavel, matriculas, turmas } = dados;
+  const { aluno, responsaveis, matriculas, turmas } = dados;
   const jaTem = new Set(matriculas.map((m) => m.turma_id));
   const opcoes = turmas.filter((t) => !jaTem.has(t.id) && ativas(t.matriculas) < t.vagas_total);
-  const wa = linkWhatsapp(responsavel?.whatsapp ?? null);
+  const wa = linkWhatsapp(responsaveis.find((r) => r.whatsapp)?.whatsapp ?? null);
 
   function campo(rotulo: string, valor: string | null | undefined) {
     return (
@@ -193,16 +195,22 @@ export default function AlunoFicha() {
 
         <div className="col" style={{ gap: 18 }}>
           <section className="card bloco">
-            <h2>Responsável</h2>
-            {responsavel ? (
-              <div className="campos">
-                {campo('Nome', responsavel.nome)}
-                {campo('Parentesco', responsavel.parentesco)}
-                {campo('WhatsApp', responsavel.whatsapp)}
-                {campo('E-mail', responsavel.email)}
-                {campo('Contato de emergência', aluno.contato_emergencia_nome)}
-                {campo('Telefone de emergência', aluno.contato_emergencia_telefone)}
-              </div>
+            <h2>{responsaveis.length > 1 ? 'Responsáveis' : 'Responsável'}</h2>
+            {responsaveis.length > 0 ? (
+              <>
+                {responsaveis.map((r, i) => (
+                  <div className="campos" key={r.id} style={i > 0 ? { marginTop: 16 } : undefined}>
+                    {campo(i === 0 ? 'Nome (principal)' : 'Nome', r.nome)}
+                    {campo('Parentesco', r.parentesco)}
+                    {campo('WhatsApp', r.whatsapp)}
+                    {campo('E-mail', r.email)}
+                  </div>
+                ))}
+                <div className="campos" style={{ marginTop: 16 }}>
+                  {campo('Contato de emergência', aluno.contato_emergencia_nome)}
+                  {campo('Telefone de emergência', aluno.contato_emergencia_telefone)}
+                </div>
+              </>
             ) : (
               <p className="leve">Sem responsável cadastrado. Use Editar ficha para incluir.</p>
             )}
