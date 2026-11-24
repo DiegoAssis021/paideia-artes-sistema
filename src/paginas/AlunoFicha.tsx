@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAviso } from '../componentes/Aviso';
 import { Campo, Carregando, Erro, Selo } from '../componentes/pecas';
 import { ativas, dataBr, iniciais, linkWhatsapp, resumoHorarios, textoIdade } from '../lib/formatar';
+import { hojeIso } from '../lib/agenda';
 import { executar, ler, supabase } from '../lib/supabase';
 import type { Aluno, MatriculaComTurma, Responsavel } from '../lib/tipos';
 import { useCarregar } from '../lib/useCarregar';
@@ -145,7 +146,7 @@ export default function AlunoFicha() {
                             executar(
                               supabase
                                 .from('matriculas')
-                                .update({ status: 'encerrada', data_fim: new Date().toISOString().slice(0, 10) })
+                                .update({ status: 'encerrada', data_fim: hojeIso() })
                                 .eq('id', m.id),
                             ),
                           'Matrícula encerrada',
