@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext';
 import { useAviso } from '../componentes/Aviso';
 import { Campo, Carregando, Erro, Selo, Stat, Topo, Vazio } from '../componentes/pecas';
 import { faixaIdade, resumoHorarios, situacaoVagas, textoIdade } from '../lib/formatar';
+import { diaSemanaIso, hojeIso } from '../lib/agenda';
 import { executar, ler, supabase } from '../lib/supabase';
 import type { Horario } from '../lib/tipos';
 import { useCarregar } from '../lib/useCarregar';
@@ -136,7 +137,7 @@ export default function TurmaDetalhe() {
       await executar(
         supabase
           .from('matriculas')
-          .update({ status: 'encerrada', data_fim: new Date().toISOString().slice(0, 10) })
+          .update({ status: 'encerrada', data_fim: hojeIso() })
           .eq('id', matriculaId),
       );
       avisar('Matrícula encerrada');
@@ -153,6 +154,8 @@ export default function TurmaDetalhe() {
   const { turma, alunos, candidatos } = dados;
   const v = situacaoVagas(turma.vagas_total, alunos.length);
   const h = resumoHorarios(turma.horarios);
+  const hoje = hojeIso();
+  const temAulaHoje = turma.horarios.some((x) => x.dia_semana === diaSemanaIso(hoje));
 
   return (
     <>
@@ -166,11 +169,18 @@ export default function TurmaDetalhe() {
         titulo={turma.nome}
         subtitulo={`${turma.cursos?.nome ?? ''} · ${faixaIdade(turma.idade_min, turma.idade_max)} · ${h.dias}${h.faixa ? `, ${h.faixa}` : ''}`}
         acoes={
-          eEquipe ? (
-            <Link className="btn btn--ghost" to={`/turmas/${turma.id}/editar`}>
-              Editar turma
-            </Link>
-          ) : null
+          <>
+            {temAulaHoje ? (
+              <Link className="btn btn--verde" to={`/chamada/${turma.id}/${hoje}`}>
+                Fazer a chamada de hoje
+              </Link>
+            ) : null}
+            {eEquipe ? (
+              <Link className="btn btn--ghost" to={`/turmas/${turma.id}/editar`}>
+                Editar turma
+              </Link>
+            ) : null}
+          </>
         }
       />
 

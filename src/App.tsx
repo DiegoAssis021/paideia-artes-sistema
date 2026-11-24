@@ -3,6 +3,8 @@ import { useAuth } from './auth/AuthContext';
 import Layout from './componentes/Layout';
 import { Carregando } from './componentes/pecas';
 import Aguardando from './paginas/Aguardando';
+import Calendario from './paginas/Calendario';
+import { ChamadaHoje, ChamadaTurma } from './paginas/Chamada';
 import AlunoFicha from './paginas/AlunoFicha';
 import AlunoForm from './paginas/AlunoForm';
 import Alunos from './paginas/Alunos';
@@ -21,6 +23,12 @@ function Protegida() {
   return <Layout />;
 }
 
+/** Página inicial: o professor cai na chamada do dia; a equipe, nas turmas. */
+function Inicio() {
+  const { eEquipe } = useAuth();
+  return <Navigate to={eEquipe ? '/turmas' : '/chamada'} replace />;
+}
+
 function SoEquipe() {
   const { eEquipe } = useAuth();
   return eEquipe ? <Outlet /> : <Navigate to="/turmas" replace />;
@@ -36,8 +44,11 @@ export default function App() {
     <Routes>
       <Route path="/entrar" element={<Login />} />
       <Route element={<Protegida />}>
-        <Route path="/" element={<Navigate to="/turmas" replace />} />
+        <Route path="/" element={<Inicio />} />
         <Route path="/turmas" element={<Turmas />} />
+        <Route path="/calendario" element={<Calendario />} />
+        <Route path="/chamada" element={<ChamadaHoje />} />
+        <Route path="/chamada/:turmaId/:data" element={<ChamadaTurma />} />
         <Route path="/turmas/:id" element={<TurmaDetalhe />} />
         <Route element={<SoEquipe />}>
           <Route path="/turmas/nova" element={<TurmaForm />} />
@@ -51,7 +62,7 @@ export default function App() {
           <Route path="/usuarios" element={<Usuarios />} />
         </Route>
       </Route>
-      <Route path="*" element={<Navigate to="/turmas" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
