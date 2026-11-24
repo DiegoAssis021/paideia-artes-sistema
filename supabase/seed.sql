@@ -140,3 +140,19 @@ from (values
 ) as v(aluno, turma)
 join public.alunos a on a.nome = v.aluno
 join public.turmas t on t.nome = v.turma;
+
+-- ---------------------------------------------------------------- chamadas fictícias
+-- Aulas das últimas duas semanas (até ontem). Algumas ficam sem chamada de propósito,
+-- para o calendário mostrar aulas "sem chamada"; as faltas são sorteadas de forma fixa.
+insert into public.presencas (turma_id, aluno_id, data, presente, registrado_por, registrado_em)
+select m.turma_id, m.aluno_id, d.dia::date,
+       (length(a.nome) + extract(day from d.dia)::int) % 6 <> 0,
+       t.professor_id,
+       (d.dia::date + h.fim + interval '5 minutes') at time zone 'America/Sao_Paulo'
+from generate_series(current_date - 14, current_date - 1, interval '1 day') as d(dia)
+join public.horarios h on h.dia_semana = extract(isodow from d.dia)::int
+join public.turmas t on t.id = h.turma_id and t.ativa
+join public.matriculas m on m.turma_id = t.id and m.status = 'ativa'
+join public.alunos a on a.id = m.aluno_id
+where (extract(day from d.dia)::int + length(t.nome)) % 4 <> 0
+on conflict (turma_id, aluno_id, data) do nothing;
