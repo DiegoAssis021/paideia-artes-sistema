@@ -54,7 +54,6 @@ export default function Alunos() {
     <>
       <Topo
         titulo="Alunos"
-        subtitulo="Fichas, responsáveis e matrículas"
         acoes={
           <button type="button" className="btn" onClick={() => ir('/alunos/novo')}>
             Novo aluno

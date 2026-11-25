@@ -242,7 +242,7 @@ export default function Biblioteca() {
     <div className="bib-tab" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <Topo
         titulo="Biblioteca"
-        subtitulo={`Quadrinhos e livros da escola. Empréstimo de até ${PRAZO_DIAS} dias.`}
+        subtitulo={`Empréstimo de até ${PRAZO_DIAS} dias`}
         acoes={
           <>
             <button

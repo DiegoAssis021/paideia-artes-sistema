@@ -41,7 +41,7 @@ export default function Usuarios() {
 
   return (
     <>
-      <Topo titulo="Usuários" subtitulo="Quem tem acesso ao sistema e com qual perfil" />
+      <Topo titulo="Usuários" />
       {erro ? <Erro texto={erro} /> : null}
       {erroAcao ? <Erro texto={erroAcao} /> : null}
       {carregando && !dados ? <Carregando /> : null}

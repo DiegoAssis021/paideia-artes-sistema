@@ -182,7 +182,7 @@ export default function Espetaculos() {
   if (!esp) {
     return (
       <>
-        <Topo titulo="Espetáculos" subtitulo="Festivais, mostras e saraus da escola" acoes={eEquipe ? novo : undefined} />
+        <Topo titulo="Espetáculos" acoes={eEquipe ? novo : undefined} />
         <div className="card">
           <Vazio texto="Nenhum espetáculo cadastrado ainda." />
         </div>
@@ -282,7 +282,7 @@ export default function Espetaculos() {
 
   return (
     <>
-      <Topo titulo="Espetáculos" subtitulo="Festivais, mostras e saraus da escola" acoes={eEquipe ? novo : undefined} />
+      <Topo titulo="Espetáculos" acoes={eEquipe ? novo : undefined} />
 
       {lista.length > 1 ? (
         <div className="chips" role="group" aria-label="Escolher espetáculo">

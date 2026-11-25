@@ -148,7 +148,7 @@ function Formulario({ dados, id, editando }: { dados: Dados; id?: string; editan
 
   return (
     <>
-      <Topo titulo={editando ? 'Editar turma' : 'Nova turma'} subtitulo="Segundo semestre de 2026" />
+      <Topo titulo={editando ? 'Editar turma' : 'Nova turma'} />
       <form className="card bloco form" onSubmit={salvar}>
         <div className="form__grade">
           <Campo rotulo="Nome da turma">

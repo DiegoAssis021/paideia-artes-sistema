@@ -62,7 +62,6 @@ export default function Layout() {
       <aside className="side">
         <img className="logo" src="/logo-branco.webp" alt="Paideia Artes" />
         <nav className="nav" aria-label="Menu principal">
-          <div className="nav__rotulo">GESTÃO</div>
           {itens.map(botao)}
           {eEquipe ? (
             <>

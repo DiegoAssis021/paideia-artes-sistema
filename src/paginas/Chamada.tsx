@@ -51,7 +51,7 @@ export function ChamadaHoje() {
 
   return (
     <>
-      <Topo titulo="Chamada" subtitulo={`${dataLonga(hoje)}. Toque na aula para registrar quem faltou.`} />
+      <Topo titulo="Chamada" subtitulo={dataLonga(hoje)} />
       {erro ? <Erro texto={erro} /> : null}
       {carregando && !dados ? <Carregando /> : null}
       {dados ? (

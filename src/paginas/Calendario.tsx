@@ -246,7 +246,7 @@ export default function Calendario() {
         ) : null}
         <div className="cal-nav" role="group" aria-label="Escolher a semana" style={{ marginLeft: eEquipe ? 'auto' : 0 }}>
           <button type="button" className="btn--link" onClick={() => mudarSemana(somarDias(semana, -7))}>
-            ← Semana anterior
+            Semana anterior
           </button>
           <button
             type="button"
@@ -257,7 +257,7 @@ export default function Calendario() {
             Esta semana
           </button>
           <button type="button" className="btn--link" onClick={() => mudarSemana(somarDias(semana, 7))}>
-            Próxima semana →
+            Próxima semana
           </button>
         </div>
       </div>
