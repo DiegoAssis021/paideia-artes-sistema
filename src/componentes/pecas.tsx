@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { TomSelo } from '../lib/formatar';
 
-export function Selo({ tom, children }: { tom: TomSelo | 'neutro' | 'nao'; children: ReactNode }) {
+export function Selo({ tom, children }: { tom: TomSelo | 'neutro' | 'nao' | 'azul'; children: ReactNode }) {
   return <span className={`selo selo--${tom}`}>{children}</span>;
 }
 

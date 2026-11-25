@@ -7,6 +7,7 @@ import Calendario from './paginas/Calendario';
 import EspetaculoForm from './paginas/EspetaculoForm';
 import Espetaculos from './paginas/Espetaculos';
 import { ChamadaHoje, ChamadaTurma } from './paginas/Chamada';
+import Biblioteca from './paginas/Biblioteca';
 import AlunoFicha from './paginas/AlunoFicha';
 import AlunoForm from './paginas/AlunoForm';
 import Alunos from './paginas/Alunos';
@@ -61,6 +62,7 @@ export default function App() {
         <Route element={<SoEquipe />}>
           <Route path="/turmas/nova" element={<TurmaForm />} />
           <Route path="/turmas/:id/editar" element={<TurmaForm />} />
+          <Route path="/biblioteca" element={<Biblioteca />} />
           <Route path="/alunos" element={<Alunos />} />
           <Route path="/alunos/novo" element={<AlunoForm />} />
           <Route path="/alunos/:id" element={<AlunoFicha />} />

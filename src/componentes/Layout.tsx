@@ -11,6 +11,7 @@ const TITULOS: Record<string, string> = {
   calendario: 'Calendário',
   espetaculos: 'Espetáculos',
   alunos: 'Alunos',
+  biblioteca: 'Biblioteca',
   usuarios: 'Usuários',
 };
 
@@ -45,6 +46,7 @@ export default function Layout() {
   itens.push({ caminho: '/calendario', rotulo: 'Calendário', icone: 'cal' });
   itens.push({ caminho: '/espetaculos', rotulo: 'Espetáculos', icone: 'palco' });
   if (eEquipe) itens.push({ caminho: '/alunos', rotulo: 'Alunos', icone: 'alunos' });
+  if (eEquipe) itens.push({ caminho: '/biblioteca', rotulo: 'Biblioteca', icone: 'livro' });
   if (eCoordenacao) itens.push({ caminho: '/usuarios', rotulo: 'Usuários', icone: 'usuarios' });
 
   const botao = (i: Item) => (

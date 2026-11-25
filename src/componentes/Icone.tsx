@@ -14,6 +14,7 @@ export const ICONES = {
   sobe: '<path d="M6 15l6-6 6 6"></path>',
   desce: '<path d="M6 9l6 6 6-6"></path>',
   x: '<path d="M6 6l12 12M18 6L6 18"></path>',
+  livro: '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5z"></path><path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20"></path>',
   relogio: '<circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5V12l3 2"></path>',
 } as const;
 
