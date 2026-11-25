@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useAuth } from '../auth/AuthContext';
 import { useAviso } from '../componentes/Aviso';
 import { Campo, Carregando, Erro, Topo } from '../componentes/pecas';
 import { DIAS_LONGOS } from '../lib/formatar';
@@ -62,7 +63,31 @@ function Formulario({ dados, id, editando }: { dados: Dados; id?: string; editan
   const avisar = useAviso();
   const t = dados.turma;
   const [nome, setNome] = useState(t?.nome ?? '');
+  const { eCoordenacao } = useAuth();
+  const [cursos, setCursos] = useState<Curso[]>(dados.cursos);
   const [cursoId, setCursoId] = useState(t?.curso_id ?? dados.cursos[0]?.id ?? '');
+  const [criandoMod, setCriandoMod] = useState(false);
+  const [novaMod, setNovaMod] = useState('');
+  const [erroMod, setErroMod] = useState<string | null>(null);
+
+  async function criarModalidade() {
+    const nomeMod = novaMod.trim();
+    setErroMod(null);
+    if (!nomeMod) return setErroMod('Digite o nome da modalidade.');
+    if (cursos.some((c) => c.nome.toLowerCase() === nomeMod.toLowerCase())) return setErroMod('Essa modalidade já existe.');
+    try {
+      const nova = await ler<Curso>(
+        supabase.from('cursos').insert({ nome: nomeMod, ordem: cursos.length + 1 }).select('id, nome').single() as never,
+      );
+      setCursos((cs) => [...cs, nova]);
+      setCursoId(nova.id);
+      setNovaMod('');
+      setCriandoMod(false);
+      avisar('Modalidade criada');
+    } catch (e) {
+      setErroMod(e instanceof Error ? e.message : String(e));
+    }
+  }
   const [idadeMin, setIdadeMin] = useState(t?.idade_min?.toString() ?? '');
   const [idadeMax, setIdadeMax] = useState(t?.idade_max?.toString() ?? '');
   const [vagas, setVagas] = useState(t?.vagas_total.toString() ?? '10');
@@ -131,13 +156,45 @@ function Formulario({ dados, id, editando }: { dados: Dados; id?: string; editan
           </Campo>
           <Campo rotulo="Curso">
             <select required value={cursoId} onChange={(e) => setCursoId(e.target.value)}>
-              {dados.cursos.map((c) => (
+              {cursos.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.nome}
                 </option>
               ))}
             </select>
           </Campo>
+          {eCoordenacao ? (
+            <div className="col" style={{ gap: 8, justifyContent: 'flex-end' }}>
+              {criandoMod ? (
+                <>
+                  <Campo rotulo="Nome da nova modalidade">
+                    <input value={novaMod} onChange={(e) => setNovaMod(e.target.value)} maxLength={60} />
+                  </Campo>
+                  {erroMod ? <Erro texto={erroMod} /> : null}
+                  <div className="form__acoes">
+                    <button type="button" className="btn btn--verde" onClick={() => void criarModalidade()}>
+                      Criar modalidade
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn--ghost"
+                      onClick={() => {
+                        setCriandoMod(false);
+                        setNovaMod('');
+                        setErroMod(null);
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <button type="button" className="btn btn--ghost" onClick={() => setCriandoMod(true)}>
+                  Nova modalidade
+                </button>
+              )}
+            </div>
+          ) : null}
           <Campo rotulo="Vagas">
             <input type="number" min={1} required value={vagas} onChange={(e) => setVagas(e.target.value)} />
           </Campo>
