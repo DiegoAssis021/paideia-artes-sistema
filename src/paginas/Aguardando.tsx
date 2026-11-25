@@ -6,7 +6,7 @@ export default function Aguardando() {
   return (
     <div className="entrada">
       <div className="card entrada__cartao">
-        <img src="/logo-branco.png" alt="Paideia Artes" className="entrada__logo" />
+        <img src="/logo-branco.webp" alt="Paideia Artes" className="entrada__logo" />
         <div>
           <h1>Acesso ainda não liberado</h1>
           <p className="leve" style={{ marginTop: 8 }}>

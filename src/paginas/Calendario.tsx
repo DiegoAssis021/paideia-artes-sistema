@@ -218,7 +218,7 @@ export default function Calendario() {
               Chamada feita
             </span>
             <span>
-              <i style={{ background: 'var(--verm-f)', border: '1px solid #EBB3AC' }} />
+              <i style={{ background: 'var(--verm-f)', border: '1px solid var(--verm-b)' }} />
               Sem chamada
             </span>
             <span>
@@ -711,7 +711,7 @@ function VisaoSalas({
                   Bloco cheio: ocupada no horário escolhido
                 </span>
                 <span>
-                  <i style={{ background: '#EFEEF2', border: '1px solid #C5C2CF' }} />
+                  <i style={{ background: 'var(--cinza-f)', border: '1px solid var(--cinza-b)' }} />
                   Bloco claro: outras aulas do dia
                 </span>
               </div>

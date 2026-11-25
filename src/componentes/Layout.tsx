@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { iniciais } from '../lib/formatar';
+import { Carregando } from './pecas';
 import { Icone, type NomeIcone } from './Icone';
 import { ROTULO_PERFIL } from '../lib/tipos';
 
@@ -59,7 +60,7 @@ export default function Layout() {
   return (
     <div className="app">
       <aside className="side">
-        <img className="logo" src="/logo-branco.png" alt="Paideia Artes" />
+        <img className="logo" src="/logo-branco.webp" alt="Paideia Artes" />
         <nav className="nav" aria-label="Menu principal">
           <div className="nav__rotulo">GESTÃO</div>
           {itens.map(botao)}
@@ -84,7 +85,9 @@ export default function Layout() {
         </button>
       </aside>
       <main ref={principal} tabIndex={-1}>
-        <Outlet />
+        <Suspense fallback={<Carregando />}>
+          <Outlet />
+        </Suspense>
       </main>
     </div>
   );

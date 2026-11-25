@@ -23,7 +23,7 @@ export default function Login() {
   return (
     <div className="entrada">
       <form className="card entrada__cartao" onSubmit={enviar}>
-        <img src="/logo-branco.png" alt="Paideia Artes" className="entrada__logo" />
+        <img src="/logo-branco.webp" alt="Paideia Artes" className="entrada__logo" />
         <div>
           <h1>Entrar</h1>
           <p className="leve">Sistema de gestão da escola</p>

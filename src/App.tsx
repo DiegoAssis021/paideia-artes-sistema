@@ -1,21 +1,23 @@
+import { lazy } from 'react';
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth/AuthContext';
 import Layout from './componentes/Layout';
 import { Carregando } from './componentes/pecas';
 import Aguardando from './paginas/Aguardando';
-import Calendario from './paginas/Calendario';
-import EspetaculoForm from './paginas/EspetaculoForm';
-import Espetaculos from './paginas/Espetaculos';
 import { ChamadaHoje, ChamadaTurma } from './paginas/Chamada';
-import Biblioteca from './paginas/Biblioteca';
-import AlunoFicha from './paginas/AlunoFicha';
-import AlunoForm from './paginas/AlunoForm';
 import Alunos from './paginas/Alunos';
 import Login from './paginas/Login';
-import TurmaDetalhe from './paginas/TurmaDetalhe';
-import TurmaForm from './paginas/TurmaForm';
 import Turmas from './paginas/Turmas';
-import Usuarios from './paginas/Usuarios';
+
+const Calendario = lazy(() => import('./paginas/Calendario'));
+const EspetaculoForm = lazy(() => import('./paginas/EspetaculoForm'));
+const Espetaculos = lazy(() => import('./paginas/Espetaculos'));
+const Biblioteca = lazy(() => import('./paginas/Biblioteca'));
+const AlunoFicha = lazy(() => import('./paginas/AlunoFicha'));
+const AlunoForm = lazy(() => import('./paginas/AlunoForm'));
+const TurmaDetalhe = lazy(() => import('./paginas/TurmaDetalhe'));
+const TurmaForm = lazy(() => import('./paginas/TurmaForm'));
+const Usuarios = lazy(() => import('./paginas/Usuarios'));
 
 /** Exige usuário logado e liberado (perfil ativo). */
 function Protegida() {
