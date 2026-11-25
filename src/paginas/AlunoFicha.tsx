@@ -15,11 +15,26 @@ interface OpcaoTurma {
   matriculas: { status: string }[];
 }
 
+interface Autorizacao {
+  id: string;
+  autorizado: boolean;
+  assinado_por: string | null;
+  observacao: string | null;
+  registrado_em: string;
+}
+
 interface Dados {
   aluno: Aluno;
+  autorizacoes: Autorizacao[];
   responsaveis: Responsavel[];
   matriculas: MatriculaComTurma[];
   turmas: OpcaoTurma[];
+}
+
+/** Data local (não UTC) de um carimbo de hora do banco. */
+function diaLocal(t: string): string {
+  const d = new Date(t);
+  return dataBr(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
 }
 
 export default function AlunoFicha() {
@@ -28,10 +43,20 @@ export default function AlunoFicha() {
   const avisar = useAviso();
   const [escolhida, setEscolhida] = useState('');
   const [erroAcao, setErroAcao] = useState<string | null>(null);
+  const [assinadoPor, setAssinadoPor] = useState('');
+  const [obsImagem, setObsImagem] = useState('');
 
   const { dados, erro, carregando, recarregar } = useCarregar<Dados>(async () => {
     const aluno = await ler<Aluno>(supabase.from('alunos').select('*').eq('id', id!).single() as never);
-    const [responsaveis, matriculas, turmas] = await Promise.all([
+    const [autorizacoes, responsaveis, matriculas, turmas] = await Promise.all([
+      ler<Autorizacao[]>(
+        supabase
+          .from('autorizacoes_imagem')
+          .select('id, autorizado, assinado_por, observacao, registrado_em')
+          .eq('aluno_id', id!)
+          .order('registrado_em', { ascending: false })
+          .limit(10) as never,
+      ),
       ler<{ ordem: number; responsaveis: Responsavel | null }[]>(
         supabase
           .from('aluno_responsaveis')
@@ -52,7 +77,7 @@ export default function AlunoFicha() {
         supabase.from('turmas').select('id, nome, vagas_total, matriculas(status)').eq('ativa', true).order('nome') as never,
       ),
     ]);
-    return { aluno, responsaveis, matriculas, turmas };
+    return { aluno, autorizacoes, responsaveis, matriculas, turmas };
   }, [id]);
 
   async function agir(fazer: () => Promise<void>, ok: string) {
@@ -70,7 +95,8 @@ export default function AlunoFicha() {
   if (carregando && !dados) return <Carregando />;
   if (!dados) return null;
 
-  const { aluno, responsaveis, matriculas, turmas } = dados;
+  const { aluno, autorizacoes, responsaveis, matriculas, turmas } = dados;
+  const atual = autorizacoes[0] ?? null;
   const jaTem = new Set(matriculas.map((m) => m.turma_id));
   const opcoes = turmas.filter((t) => !jaTem.has(t.id) && ativas(t.matriculas) < t.vagas_total);
   const wa = linkWhatsapp(responsaveis.find((r) => r.whatsapp)?.whatsapp ?? null);
@@ -215,6 +241,90 @@ export default function AlunoFicha() {
             ) : (
               <p className="leve">Sem responsável cadastrado. Use Editar ficha para incluir.</p>
             )}
+          </section>
+          <section className="card bloco" aria-labelledby="titulo-imagem">
+            <h2 id="titulo-imagem">Uso de imagem</h2>
+            <div className="imagem">
+              <div>
+                <b>{atual ? (atual.autorizado ? 'Autorizado' : 'Não autorizado') : 'Sem registro'}</b>
+                <span>
+                  {atual
+                    ? `${atual.assinado_por ? `Assinado por ${atual.assinado_por}, ` : ''}registrado em ${diaLocal(atual.registrado_em)}`
+                    : 'Ninguém registrou a autorização deste aluno ainda.'}
+                </span>
+              </div>
+              <Selo tom={atual ? (atual.autorizado ? 'ok' : 'bad') : 'warn'}>
+                {atual ? (atual.autorizado ? 'Pode publicar' : 'Não publicar') : 'Pendente'}
+              </Selo>
+            </div>
+            {!atual?.autorizado ? (
+              <div className="alerta alerta--bad">
+                <span>
+                  {atual
+                    ? 'Não publicar fotos nem vídeos deste aluno no site, no Instagram ou em material do festival.'
+                    : 'Sem autorização registrada, trate como não autorizado até a família assinar.'}
+                </span>
+              </div>
+            ) : null}
+            <Campo rotulo="Assinado por">
+              <input
+                list="lista-assinantes"
+                value={assinadoPor}
+                onChange={(e) => setAssinadoPor(e.target.value)}
+                placeholder="Nome de quem assinou"
+              />
+            </Campo>
+            <datalist id="lista-assinantes">
+              {responsaveis.map((r) => (
+                <option key={r.id} value={r.nome} />
+              ))}
+            </datalist>
+            <Campo rotulo="Observação (opcional)">
+              <input value={obsImagem} onChange={(e) => setObsImagem(e.target.value)} />
+            </Campo>
+            <div className="form__acoes">
+              {[true, false].map((valor) => (
+                <button
+                  key={String(valor)}
+                  type="button"
+                  className={valor ? 'btn btn--verde' : 'btn btn--ghost'}
+                  disabled={atual?.autorizado === valor && !assinadoPor.trim() && !obsImagem.trim()}
+                  onClick={() =>
+                    void agir(async () => {
+                      await executar(
+                        supabase.from('autorizacoes_imagem').insert({
+                          aluno_id: aluno.id,
+                          autorizado: valor,
+                          assinado_por: assinadoPor.trim() || null,
+                          observacao: obsImagem.trim() || null,
+                        }),
+                      );
+                      setAssinadoPor('');
+                      setObsImagem('');
+                    }, valor ? 'Autorização registrada' : 'Recusa registrada')
+                  }
+                >
+                  {valor ? 'Registrar autorização' : 'Registrar que não autoriza'}
+                </button>
+              ))}
+            </div>
+            {autorizacoes.length > 1 ? (
+              <details>
+                <summary>Histórico ({autorizacoes.length} registros)</summary>
+                <div className="lista-p">
+                  {autorizacoes.map((a) => (
+                    <div key={a.id}>
+                      <span>
+                        {a.autorizado ? 'Autorizou' : 'Não autorizou'}
+                        {a.assinado_por ? `, ${a.assinado_por}` : ''}
+                        {a.observacao ? `. ${a.observacao}` : ''}
+                      </span>
+                      <span className="leve">{diaLocal(a.registrado_em)}</span>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            ) : null}
           </section>
           <section className="card bloco">
             <h2>Observações da secretaria</h2>
