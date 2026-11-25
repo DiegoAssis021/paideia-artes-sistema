@@ -5,9 +5,9 @@
 /* entrada e acesso */
 .entrada{min-height:100vh;display:grid;place-items:center;padding:24px;background:var(--papel)}
 .entrada__cartao{width:min(420px,100%);padding:32px 30px;display:flex;flex-direction:column;gap:18px}
-.entrada__cartao h1{font-size:28px;font-weight:800;letter-spacing:-.02em}
+.entrada__cartao h1{font-size:1.75rem;font-weight:800;letter-spacing:-.02em}
 .entrada__logo{height:64px;width:auto;align-self:flex-start;background:var(--tinta);padding:8px 14px;border-radius:12px}
-.entrada__nota{font-size:13.5px}
+.entrada__nota{font-size:0.8438rem}
 
 /* a tela de entrada cresce com a janela: confortável no celular, proporcional em telas grandes */
 .entrada{padding:clamp(16px,3vw,48px)}
@@ -24,24 +24,24 @@
 .btn:disabled{opacity:.6;cursor:not-allowed}
 
 /* menu lateral */
-.side .sair{margin-top:-14px;height:44px;border:1.5px solid rgba(255,255,255,.2);border-radius:10px;background:transparent;color:#C9C5DD;font-weight:600;font-size:14.5px;cursor:pointer}
-.side .sair:hover{background:rgba(255,255,255,.08);color:#fff}
+.side .sair{margin-top:-14px;height:44px;border:1.5px solid rgba(255,255,255,.2);border-radius:10px;background:transparent;color:var(--nav-t);font-weight:600;font-size:0.9062rem;cursor:pointer}
+.side .sair:hover{background:rgba(255,255,255,.08);color:var(--branco)}
 
 /* formulários */
 .form{display:flex;flex-direction:column;gap:18px;max-width:880px}
 .form__grade{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px 20px}
 .form__acoes{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
-.campo textarea{width:100%;min-height:96px;padding:12px 14px;border-radius:10px;border:1.5px solid rgba(31,29,43,.2);background:#fff;font-size:15px;font-family:inherit;color:var(--texto);resize:vertical}
-.campo--marcar{flex-direction:row;align-items:center;gap:10px;min-height:44px;font-size:14.5px;color:var(--texto)}
+.campo textarea{width:100%;min-height:96px;padding:12px 14px;border-radius:10px;border:1.5px solid rgba(31,29,43,.2);background:var(--branco);font-size:0.9375rem;font-family:inherit;color:var(--texto);resize:vertical}
+.campo--marcar{flex-direction:row;align-items:center;gap:10px;min-height:44px;font-size:0.9062rem;color:var(--texto)}
 .campo--marcar input{width:20px;height:20px;accent-color:var(--tinta);margin:0}
 .horario-linha{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px}
 .horario-linha .campo{flex:1 1 130px}
-.btn--perigo{background:#fff;color:var(--tijolo);border:1.5px solid var(--tijolo);font-weight:600;font-size:14.5px;padding:0 20px}
-.btn--perigo:hover{background:#FBE3E0;color:#7E1F18}
-.busca{height:44px;min-width:240px;padding:0 14px;border-radius:10px;border:1.5px solid rgba(31,29,43,.2);background:#fff;font-size:15px;color:var(--texto)}
+.btn--perigo{background:var(--branco);color:var(--tijolo);border:1.5px solid var(--tijolo);font-weight:600;font-size:0.9062rem;padding:0 20px}
+.btn--perigo:hover{background:var(--verm-f);color:var(--verm-t)}
+.busca{height:44px;min-width:240px;padding:0 14px;border-radius:10px;border:1.5px solid rgba(31,29,43,.2);background:var(--branco);font-size:0.9375rem;color:var(--texto)}
 .linha-acao{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px}
 .linha-acao .campo{flex:1 1 260px}
-.sub-nota{font-size:13px;color:var(--leve)}
+.sub-nota{font-size:0.8125rem;color:var(--leve)}
 td .link-turma{padding:4px 0}
 .selo-btn{border:0;font-family:inherit;cursor:pointer}
 
@@ -49,7 +49,7 @@ td .link-turma{padding:4px 0}
 a.voltar{text-decoration:none}
 .chamada-real{width:100%;max-width:460px;display:flex;flex-direction:column;overflow:hidden;background:var(--papel)}
 .chamada-real .fone__topo{padding:22px 20px 4px;gap:16px}
-.chamada-real h2{font-size:28px;font-weight:800;letter-spacing:-.02em}
+.chamada-real h2{font-size:1.75rem;font-weight:800;letter-spacing:-.02em}
 .chamada-real .fone__lista{overflow:visible}
 .chamada-real .fone__rodape{position:sticky;bottom:0;background:var(--papel);display:flex;flex-direction:column;gap:10px;padding-bottom:20px}
 .chamada-real .fone__salvar:disabled{opacity:.6;cursor:not-allowed}
@@ -66,7 +66,16 @@ a.voltar{text-decoration:none}
 .cal__grade{grid-template-columns:48px repeat(6,minmax(0,1fr))}
 .cal-nav{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .cal-nav .btn--link{height:44px}
-.sala-card,.vg-cab,.vg-col{--tom:color-mix(in srgb,var(--cor) 12%,#fff);--bs:color-mix(in srgb,var(--cor) 40%,#fff)}
+.sala-card,.vg-cab,.vg-col{--tom:color-mix(in srgb,var(--cor) 12%,var(--branco));--bs:color-mix(in srgb,var(--cor) 40%,var(--branco))}
 .vg-cabs,.vg-corpo{grid-template-columns:var(--eixo) repeat(var(--n,7),minmax(0,1fr))}
 .vg-corpo{height:780px}
 .btn--link:disabled{opacity:.5;cursor:default}
+
+/* celular: cabeçalho compacto, logo e Sair na primeira linha, menu em uma faixa que rola */
+@media (max-width:900px){
+  .side{flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:10px 16px;overflow:visible}
+  .side .logo{height:44px;margin-left:0}
+  .side .sair{margin:0 0 0 auto;padding:0 18px}
+  .nav{order:3;flex:1 1 100%;flex-wrap:nowrap;overflow-x:auto;gap:6px;padding:3px 2px;scrollbar-width:thin}
+  .nav a,.nav button{flex:0 0 auto;padding:0 14px}
+}

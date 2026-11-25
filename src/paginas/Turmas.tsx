@@ -119,7 +119,7 @@ export default function Turmas() {
             </div>
           </section>
 
-          <div className="card tabela">
+          <div className="card tabela" tabIndex={0} role="region" aria-label="Lista de turmas">
             {lista.length === 0 ? (
               <Vazio texto={todas.length === 0 ? 'Nenhuma turma cadastrada ainda.' : 'Nenhuma turma com esses filtros.'}>
                 {todas.length > 0 ? (

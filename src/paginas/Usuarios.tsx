@@ -53,7 +53,7 @@ export default function Usuarios() {
             {dados?.length ?? 0} pessoas
           </span>
         </div>
-        <div className="tabela">
+        <div className="tabela" tabIndex={0} role="region" aria-label="Usuários do sistema">
           <table style={{ minWidth: 640 }}>
             <thead>
               <tr>
@@ -111,7 +111,7 @@ export default function Usuarios() {
 
       <section className="card sec">
         <h2>O que cada perfil pode fazer</h2>
-        <div className="tabela" style={{ padding: '8px 0 4px' }}>
+        <div className="tabela" style={{ padding: '8px 0 4px' }} tabIndex={0} role="region" aria-label="Quem pode o quê">
           <table style={{ minWidth: 640 }}>
             <thead>
               <tr>

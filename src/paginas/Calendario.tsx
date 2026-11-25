@@ -214,19 +214,19 @@ export default function Calendario() {
         {vista === 'semana' ? (
           <div className="legenda">
             <span>
-              <i style={{ background: '#E2EFE7', border: '1px solid #B9D6C5' }} />
+              <i style={{ background: 'var(--verde-f)', border: '1px solid var(--verde-b)' }} />
               Chamada feita
             </span>
             <span>
-              <i style={{ background: '#FBE3E0', border: '1px solid #EBB3AC' }} />
+              <i style={{ background: 'var(--verm-f)', border: '1px solid #EBB3AC' }} />
               Sem chamada
             </span>
             <span>
-              <i style={{ background: '#FBEFC9', border: '1px solid #E8CF7A' }} />
+              <i style={{ background: 'var(--ambar-f)', border: '1px solid var(--ambar-b)' }} />
               Hoje
             </span>
             <span>
-              <i style={{ background: '#fff', border: '1px solid rgba(31,29,43,.25)' }} />
+              <i style={{ background: 'var(--branco)', border: '1px solid rgba(31,29,43,.25)' }} />
               Próximas aulas
             </span>
           </div>
@@ -321,11 +321,11 @@ function VisaoSemana({
 
   return (
     <div className="cal-wrap">
-      <section className="card cal" aria-label="Semana">
+      <section className="card cal" aria-label="Semana" tabIndex={0}>
         <div className="cal__grade" style={{ gridTemplateColumns: `48px ${colunas}` }}>
           <div style={{ borderBottom: '1px solid rgba(31,29,43,.1)' }} />
           {dias.map((d) => (
-            <div key={d.iso} className={`cal__cab${d.rel === 'hoje' ? ' cal__cab--hoje' : ''}`}>
+            <div key={d.iso} className={`cal__cab${d.rel === 'hoje' ? ' cal__cab--hoje' : ''}`} aria-current={d.rel === 'hoje' ? 'date' : undefined}>
               <span>{d.curto}</span>
               <b>{d.num}</b>
             </div>
@@ -380,7 +380,7 @@ function VisaoSemana({
         </div>
       </section>
 
-      <aside className="card painel" aria-label="Detalhes da aula" aria-live="polite">
+      <aside className="card painel" aria-label="Detalhes da aula">
         {escolhida ? (
           <Painel a={escolhida} aoVerSalas={aoVerSalas} />
         ) : (
@@ -707,7 +707,7 @@ function VisaoSalas({
               <h2 style={{ fontSize: 18, fontWeight: 700 }}>Ocupação do dia, sala por sala</h2>
               <div className="legenda">
                 <span>
-                  <i style={{ background: '#605B6E' }} />
+                  <i style={{ background: 'var(--leve)' }} />
                   Bloco cheio: ocupada no horário escolhido
                 </span>
                 <span>
@@ -717,7 +717,7 @@ function VisaoSalas({
               </div>
             </div>
             <p className="dica-rolagem">Deslize para o lado para ver todas as salas.</p>
-            <div className="tabela">
+            <div className="tabela" tabIndex={0} role="region" aria-label="Grade das salas, role para o lado">
               <div className="vg" style={{ minWidth: Math.max(900, 56 + salas.length * 130), '--n': salas.length } as CSSProperties}>
                 <div className="vg-cabs">
                   <div />

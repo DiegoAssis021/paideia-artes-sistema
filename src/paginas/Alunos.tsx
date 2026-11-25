@@ -96,7 +96,7 @@ export default function Alunos() {
             </div>
           </section>
 
-          <div className="card tabela">
+          <div className="card tabela" tabIndex={0} role="region" aria-label="Lista de alunos">
             {lista.length === 0 ? (
               <Vazio texto={total === 0 ? 'Nenhum aluno cadastrado ainda.' : 'Nenhum aluno com esses filtros.'} />
             ) : (

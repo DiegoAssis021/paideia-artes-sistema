@@ -1,8 +1,18 @@
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { iniciais } from '../lib/formatar';
 import { Icone, type NomeIcone } from './Icone';
 import { ROTULO_PERFIL } from '../lib/tipos';
+
+const TITULOS: Record<string, string> = {
+  chamada: 'Chamada',
+  turmas: 'Turmas',
+  calendario: 'Calendário',
+  espetaculos: 'Espetáculos',
+  alunos: 'Alunos',
+  usuarios: 'Usuários',
+};
 
 interface Item {
   caminho: string;
@@ -13,7 +23,20 @@ interface Item {
 export default function Layout() {
   const { perfil, eEquipe, eCoordenacao, sair } = useAuth();
   const { pathname } = useLocation();
-  const ir = useNavigate();
+  const principal = useRef<HTMLElement>(null);
+  const primeira = useRef(true);
+
+  // Ao trocar de tela: título da aba acompanha a tela e o foco vai ao conteúdo,
+  // para o leitor de tela e o teclado perceberem a mudança.
+  useEffect(() => {
+    const nome = TITULOS[pathname.split('/')[1] ?? ''];
+    document.title = nome ? `${nome} · Paideia Artes` : 'Sistema Paideia Artes';
+    if (primeira.current) {
+      primeira.current = false;
+      return;
+    }
+    principal.current?.focus({ preventScroll: true });
+  }, [pathname]);
 
   const itens: Item[] = [];
   // Para o professor, a chamada vem primeiro (é o que ele usa no celular).
@@ -25,15 +48,10 @@ export default function Layout() {
   if (eCoordenacao) itens.push({ caminho: '/usuarios', rotulo: 'Usuários', icone: 'usuarios' });
 
   const botao = (i: Item) => (
-    <button
-      key={i.caminho}
-      type="button"
-      aria-current={pathname === i.caminho || pathname.startsWith(`${i.caminho}/`) ? 'page' : undefined}
-      onClick={() => ir(i.caminho)}
-    >
+    <NavLink key={i.caminho} to={i.caminho}>
       <Icone nome={i.icone} />
       {i.rotulo}
-    </button>
+    </NavLink>
   );
 
   return (
@@ -63,7 +81,7 @@ export default function Layout() {
           Sair
         </button>
       </aside>
-      <main tabIndex={-1}>
+      <main ref={principal} tabIndex={-1}>
         <Outlet />
       </main>
     </div>

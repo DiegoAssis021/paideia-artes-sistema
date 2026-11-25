@@ -63,15 +63,15 @@ export function situacaoVagas(total: number, ocupadas: number) {
   if (livres === 0) {
     tom = 'bad';
     texto = 'Lotada';
-    cor = '#C8372D';
+    cor = 'var(--tijolo)';
   } else if (livres <= 2) {
     tom = 'warn';
     texto = livres === 1 ? 'Última vaga' : 'Últimas 2 vagas';
-    cor = '#E8B021';
+    cor = 'var(--ocre)';
   } else {
     tom = 'ok';
     texto = `${livres} vagas`;
-    cor = '#2F6B4F';
+    cor = 'var(--mata)';
   }
   return { livres, tom, texto, cor, pct: Math.round((ocupadas / total) * 100) };
 }

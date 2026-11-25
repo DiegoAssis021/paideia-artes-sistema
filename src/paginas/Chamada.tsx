@@ -275,7 +275,9 @@ function ListaChamada({
                 key={a.aluno_id}
                 type="button"
                 className={`aluno${f ? ' aluno--falta' : ''}`}
-                aria-pressed={!f}
+                role="checkbox"
+                aria-checked={!f}
+                aria-label={`Presença de ${a.nome}`}
                 aria-disabled={!editando}
                 onClick={() => alternar(a.aluno_id)}
               >
@@ -285,7 +287,7 @@ function ListaChamada({
                   </span>
                   <span>{a.nome}</span>
                 </span>
-                <span className="aluno__st">{f ? 'Falta' : 'Presente'}</span>
+                <span className="aluno__st" aria-hidden="true">{f ? 'Falta' : 'Presente'}</span>
               </button>
             );
           })}

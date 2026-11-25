@@ -223,7 +223,7 @@ export default function TurmaDetalhe() {
         </section>
       ) : null}
 
-      <div className="card tabela">
+      <div className="card tabela" tabIndex={0} role="region" aria-label="Alunos da turma">
         {alunos.length === 0 ? (
           <Vazio texto="Nenhum aluno matriculado nesta turma ainda." />
         ) : (
