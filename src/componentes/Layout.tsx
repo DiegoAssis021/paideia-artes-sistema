@@ -20,6 +20,7 @@ export default function Layout() {
   if (!eEquipe) itens.push({ caminho: '/chamada', rotulo: 'Chamada', icone: 'phone' });
   itens.push({ caminho: '/turmas', rotulo: eEquipe ? 'Turmas' : 'Minhas turmas', icone: 'turmas' });
   itens.push({ caminho: '/calendario', rotulo: 'Calendário', icone: 'cal' });
+  itens.push({ caminho: '/espetaculos', rotulo: 'Espetáculos', icone: 'palco' });
   if (eEquipe) itens.push({ caminho: '/alunos', rotulo: 'Alunos', icone: 'alunos' });
   if (eCoordenacao) itens.push({ caminho: '/usuarios', rotulo: 'Usuários', icone: 'usuarios' });
 

@@ -4,6 +4,8 @@ import Layout from './componentes/Layout';
 import { Carregando } from './componentes/pecas';
 import Aguardando from './paginas/Aguardando';
 import Calendario from './paginas/Calendario';
+import EspetaculoForm from './paginas/EspetaculoForm';
+import Espetaculos from './paginas/Espetaculos';
 import { ChamadaHoje, ChamadaTurma } from './paginas/Chamada';
 import AlunoFicha from './paginas/AlunoFicha';
 import AlunoForm from './paginas/AlunoForm';
@@ -50,6 +52,12 @@ export default function App() {
         <Route path="/chamada" element={<ChamadaHoje />} />
         <Route path="/chamada/:turmaId/:data" element={<ChamadaTurma />} />
         <Route path="/turmas/:id" element={<TurmaDetalhe />} />
+        <Route path="/espetaculos" element={<Espetaculos />} />
+        <Route element={<SoEquipe />}>
+          <Route path="/espetaculos/novo" element={<EspetaculoForm />} />
+          <Route path="/espetaculos/:id/editar" element={<EspetaculoForm />} />
+        </Route>
+        <Route path="/espetaculos/:id" element={<Espetaculos />} />
         <Route element={<SoEquipe />}>
           <Route path="/turmas/nova" element={<TurmaForm />} />
           <Route path="/turmas/:id/editar" element={<TurmaForm />} />

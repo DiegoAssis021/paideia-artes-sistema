@@ -10,6 +10,11 @@ export const ICONES = {
   check: '<path d="M5 12.5l4.5 4.5L19 7.5"></path>',
   warn: '<path d="M12 3l9.5 17h-19z"></path><path d="M12 10v4M12 17.5v.5"></path>',
   voltar: '<path d="M15 18l-6-6 6-6"></path>',
+  palco: '<path d="M3 21h18"></path><path d="M5 21V8l7-4 7 4v13"></path><path d="M9 21v-7h6v7"></path>',
+  sobe: '<path d="M6 15l6-6 6 6"></path>',
+  desce: '<path d="M6 9l6 6 6-6"></path>',
+  x: '<path d="M6 6l12 12M18 6L6 18"></path>',
+  relogio: '<circle cx="12" cy="12" r="8.5"></circle><path d="M12 7.5V12l3 2"></path>',
 } as const;
 
 export type NomeIcone = keyof typeof ICONES;
