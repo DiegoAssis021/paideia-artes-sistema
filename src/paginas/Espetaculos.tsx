@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { useAviso } from '../componentes/Aviso';
 import { Icone } from '../componentes/Icone';
+import { JanelaNumero, type EdicaoNumero } from '../componentes/JanelaNumero';
 import { Carregando, Erro, Selo, Stat, Topo, Vazio } from '../componentes/pecas';
 import { dataLonga, hojeIso } from '../lib/agenda';
 import { hora } from '../lib/formatar';
@@ -63,6 +64,8 @@ interface Dados {
   ensaios: Ensaio[];
   turmas: TurmaSimples[];
   alunosPorTurma: Map<string, number>;
+  alunosDaTurma: Map<string, { id: string; nome: string }[]>;
+  ausentes: Map<string, Set<string>>; // número -> alunos que ficam de fora
   semImagem: { aluno: string; turma: string }[] | null; // só a equipe vê
 }
 
@@ -91,8 +94,6 @@ export default function Espetaculos() {
   const avisar = useAviso();
   const [erroAcao, setErroAcao] = useState<string | null>(null);
   const [editando, setEditando] = useState<string | null>(null);
-  const [titulo, setTitulo] = useState('');
-  const [duracao, setDuracao] = useState('');
 
   const { dados, erro, carregando, recarregar } = useCarregar<Dados>(async () => {
     const lista = await ler<Dados['lista']>(
@@ -102,7 +103,7 @@ export default function Espetaculos() {
     const padrao = lista.find((e) => (e.data ?? '') >= hoje) ?? lista[lista.length - 1];
     const alvo = id ?? padrao?.id;
     if (!alvo) {
-      return { lista, esp: null, numeros: [], ensaios: [], turmas: [], alunosPorTurma: new Map(), semImagem: null };
+      return { lista, esp: null, numeros: [], ensaios: [], turmas: [], alunosPorTurma: new Map(), alunosDaTurma: new Map(), ausentes: new Map(), semImagem: null };
     }
     const [esp, numeros, ensaios, turmas] = await Promise.all([
       ler<Espetaculo>(
@@ -126,18 +127,29 @@ export default function Espetaculos() {
     ]);
 
     const alunosPorTurma = new Map<string, number>();
+    const alunosDaTurma = new Map<string, { id: string; nome: string }[]>();
+    const ausentes = new Map<string, Set<string>>();
     let semImagem: Dados['semImagem'] = null;
     if (eEquipe) {
-      const ids = numeros.map((n) => n.turma_id).filter((x): x is string => !!x);
-      const [ms, auts] = await Promise.all([
+      const [ms, auts, fora] = await Promise.all([
         ler<{ turma_id: string; aluno_id: string; alunos: { nome: string } }[]>(
           supabase.from('matriculas').select('turma_id, aluno_id, alunos(nome)').eq('status', 'ativa') as never,
         ),
         ler<{ aluno_id: string; autorizado: boolean; registrado_em: string }[]>(
           supabase.from('autorizacoes_imagem').select('aluno_id, autorizado, registrado_em') as never,
         ),
+        ler<{ numero_id: string; aluno_id: string }[]>(
+          supabase.from('numeros_espetaculo_ausentes').select('numero_id, aluno_id') as never,
+        ),
       ]);
-      for (const m of ms) alunosPorTurma.set(m.turma_id, (alunosPorTurma.get(m.turma_id) ?? 0) + 1);
+      for (const m of ms) {
+        alunosPorTurma.set(m.turma_id, (alunosPorTurma.get(m.turma_id) ?? 0) + 1);
+        const l = alunosDaTurma.get(m.turma_id) ?? [];
+        l.push({ id: m.aluno_id, nome: m.alunos.nome });
+        alunosDaTurma.set(m.turma_id, l);
+      }
+      for (const l of alunosDaTurma.values()) l.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+      for (const f of fora) ausentes.set(f.numero_id, (ausentes.get(f.numero_id) ?? new Set()).add(f.aluno_id));
       const ultima = new Map<string, { autorizado: boolean; em: string }>();
       for (const a of auts) {
         const atual = ultima.get(a.aluno_id);
@@ -146,15 +158,16 @@ export default function Espetaculos() {
       const nomeTurma = new Map(turmas.map((t) => [t.id, t.nome]));
       const vistos = new Set<string>();
       semImagem = [];
-      for (const m of ms) {
-        if (!ids.includes(m.turma_id) || vistos.has(m.aluno_id)) continue;
-        vistos.add(m.aluno_id);
-        if (ultima.get(m.aluno_id)?.autorizado !== true) {
-          semImagem.push({ aluno: m.alunos.nome, turma: nomeTurma.get(m.turma_id) ?? '' });
+      for (const n of numeros) {
+        if (!n.turma_id) continue;
+        for (const a of alunosDaTurma.get(n.turma_id) ?? []) {
+          if (ausentes.get(n.id)?.has(a.id) || vistos.has(a.id)) continue;
+          vistos.add(a.id);
+          if (ultima.get(a.id)?.autorizado !== true) semImagem.push({ aluno: a.nome, turma: nomeTurma.get(n.turma_id) ?? '' });
         }
       }
     }
-    return { lista, esp, numeros, ensaios, turmas, alunosPorTurma, semImagem };
+    return { lista, esp, numeros, ensaios, turmas, alunosPorTurma, alunosDaTurma, ausentes, semImagem };
   }, [id, eEquipe]);
 
   async function agir(fazer: () => Promise<void>, aviso?: string) {
@@ -172,7 +185,7 @@ export default function Espetaculos() {
   if (carregando && !dados) return <Carregando />;
   if (!dados) return null;
 
-  const { lista, esp, numeros, ensaios, turmas, alunosPorTurma, semImagem } = dados;
+  const { lista, esp, numeros, ensaios, turmas, alunosPorTurma, alunosDaTurma, ausentes, semImagem } = dados;
   const novo = (
     <Link className="btn" to="/espetaculos/novo">
       Novo espetáculo
@@ -209,12 +222,15 @@ export default function Espetaculos() {
 
   const turmasNoPalco = new Set(numeros.map((n) => n.turma_id).filter((x): x is string => !!x));
   const fora = turmas.filter((t) => !turmasNoPalco.has(t.id));
-  const alunosTotal = [...turmasNoPalco].reduce((s, t) => s + (alunosPorTurma.get(t) ?? 0), 0);
+  const participantesDe = (n: Numero) =>
+    (n.turma_id ? alunosDaTurma.get(n.turma_id) ?? [] : []).filter((a) => !ausentes.get(n.id)?.has(a.id));
+  const alunosTotal = new Set(numeros.flatMap((n) => participantesDe(n).map((a) => a.id))).size;
   const figP = numeros.filter((n) => !n.figurino_ok).length;
   const somP = numeros.filter((n) => !n.som_ok).length;
   const nImg = semImagem?.length ?? 0;
   const pendTotal = figP + somP + nImg;
   const st = ROTULO_STATUS[esp.status] ?? ROTULO_STATUS.planejamento;
+  const numeroEditado = numeros.find((n) => n.id === editando) ?? null;
   const plural = (n: number, um: string, varios: string) => (n === 1 ? um : varios.replace('{n}', String(n)));
 
   const porTurma = new Map<string, number>();
@@ -262,22 +278,15 @@ export default function Espetaculos() {
     );
   }
 
-  function abrirEdicao(n: Numero) {
-    setEditando(n.id);
-    setTitulo(n.titulo);
-    setDuracao(String(n.duracao_min ?? ''));
-  }
-
-  function salvarEdicao(n: Numero) {
-    const d = duracao.trim() === '' ? null : Number(duracao);
-    if (!titulo.trim() || (d !== null && (!Number.isInteger(d) || d <= 0))) {
-      setErroAcao('Informe o título e uma duração em minutos (número inteiro maior que zero).');
-      return;
+  async function salvarEdicao(n: Numero, e: EdicaoNumero) {
+    await executar(supabase.from('numeros_espetaculo').update({ titulo: e.titulo, duracao_min: e.duracao }).eq('id', n.id));
+    await executar(supabase.from('numeros_espetaculo_ausentes').delete().eq('numero_id', n.id));
+    if (e.ausentes.length > 0) {
+      await executar(supabase.from('numeros_espetaculo_ausentes').insert(e.ausentes.map((aluno_id) => ({ numero_id: n.id, aluno_id }))));
     }
-    void agir(async () => {
-      await executar(supabase.from('numeros_espetaculo').update({ titulo: titulo.trim(), duracao_min: d }).eq('id', n.id));
-      setEditando(null);
-    }, 'Número atualizado');
+    setEditando(null);
+    avisar('Número atualizado');
+    recarregar();
   }
 
   return (
@@ -355,39 +364,14 @@ export default function Espetaculos() {
                     <span className="numero__ord">{i + 1}</span>
                     <span className="numero__hora">{relogio(inicio)}</span>
                     <div className="numero__info">
-                      {editando === n.id ? (
-                        <div className="linha-acao">
-                          <input
-                            className="busca"
-                            style={{ minWidth: 180 }}
-                            aria-label="Título do número"
-                            value={titulo}
-                            onChange={(e) => setTitulo(e.target.value)}
-                          />
-                          <input
-                            className="busca"
-                            style={{ minWidth: 0, width: 90 }}
-                            inputMode="numeric"
-                            aria-label="Duração em minutos"
-                            placeholder="min"
-                            value={duracao}
-                            onChange={(e) => setDuracao(e.target.value)}
-                          />
-                          <button type="button" className="btn" style={{ height: 40 }} onClick={() => salvarEdicao(n)}>
-                            Salvar
-                          </button>
-                          <button type="button" className="btn btn--ghost" style={{ height: 40 }} onClick={() => setEditando(null)}>
-                            Cancelar
-                          </button>
-                        </div>
-                      ) : (
+                      {(
                         <>
                           <b>{n.titulo}</b>
                           <span>
                             {[
                               n.turmas?.nome,
                               n.turmas?.perfis ? `com ${n.turmas.perfis.nome}` : null,
-                              n.turma_id && eEquipe ? textoAlunos(alunosPorTurma.get(n.turma_id) ?? 0) : null,
+                              n.turma_id && eEquipe ? `${participantesDe(n).length} de ${textoAlunos(alunosPorTurma.get(n.turma_id) ?? 0)}` : null,
                               n.duracao_min ? `${n.duracao_min} min` : null,
                             ]
                               .filter(Boolean)
@@ -412,7 +396,7 @@ export default function Espetaculos() {
                         <button type="button" className="mini" aria-label={`Descer ${n.titulo}`} disabled={i === numeros.length - 1} onClick={() => mover(i, 1)}>
                           <Icone nome="desce" tamanho={16} />
                         </button>
-                        <button type="button" className="btn--link" onClick={() => abrirEdicao(n)}>
+                        <button type="button" className="btn--link" onClick={() => setEditando(n.id)}>
                           Editar
                         </button>
                         <button type="button" className="mini" aria-label={`Tirar ${n.titulo} do espetáculo`} onClick={() => tirar(n)}>
@@ -503,6 +487,19 @@ export default function Espetaculos() {
           ) : null}
         </div>
       </div>
+
+      {numeroEditado ? (
+        <JanelaNumero
+          key={numeroEditado.id}
+          tituloInicial={numeroEditado.titulo}
+          duracaoInicial={numeroEditado.duracao_min}
+          nomeTurma={numeroEditado.turmas?.nome ?? null}
+          alunos={numeroEditado.turma_id ? alunosDaTurma.get(numeroEditado.turma_id) ?? [] : []}
+          ausentesIniciais={ausentes.get(numeroEditado.id) ?? new Set()}
+          aoSalvar={(e) => salvarEdicao(numeroEditado, e)}
+          aoFechar={() => setEditando(null)}
+        />
+      ) : null}
     </>
   );
 }
